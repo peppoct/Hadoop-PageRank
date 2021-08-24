@@ -3,6 +3,7 @@ package parser;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import utility.Counter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,20 +17,44 @@ public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
     private static final Pattern text_pat = Pattern.compile("<text(.*?)</text>");
     private static final Pattern link_pat = Pattern.compile("\\[\\[(.*?)\\]\\]");
 
+    private static final Text outputKey = new Text();
+    private static final Text outputVal = new Text();
 
+    /**
+     *
+     * @param key
+     * @param value
+     * @param context
+     * @throws IOException
+     * @throws InterruptedException
+     */
     @Override
-    protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException{
+    public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException{
         String line = value.toString();
-        String title = getTitle(line);
+        outputKey.set(getTitle(line));
         String text  = getText(line);
-        Text[] link = getOutgoingLinks(line);
+        Text[] link = getOutgoingLinks(text);
+
+        // get the counters to count the number of pages (line)
+        context.getCounter(Counter.TOTAL_PAGES).increment(1);
+
         if (link.length != 0){
+
             for (int i=0; i<link.length; i++)
-                context.write(new Text(title), link[i]);
+                context.write(outputKey, link[i]);
+
         } else {
-            context.write(new Text(title), new Text(""));
+            context.write(outputKey, new Text(""));
         }
     }
+
+    //************************************UTILITY******************************************/
+
+    /**
+     *
+     * @param str
+     * @return return the title of the current page
+     */
 
     private String getTitle(String str){
         Matcher title_match = title_pat.matcher(str);
@@ -41,6 +66,11 @@ public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
             return null;
     }
 
+    /**
+     *
+     * @param str
+     * @return return the text of the current page
+     */
     private String getText(String str){
         Matcher text_match = text_pat.matcher(str);
 
@@ -51,6 +81,11 @@ public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
             return null;
     }
 
+    /**
+     *
+     * @param str
+     * @return return an array of outgoing links
+     */
     private Text[] getOutgoingLinks(String str){
 
         List<Text> outgoingLinks = new ArrayList<>();
@@ -59,7 +94,6 @@ public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
         while(links.find()){
             outgoingLinks.add(new Text(links.group(1)));
         }
-
 
         Text[] arrayLinks = new Text[outgoingLinks.size()];
         outgoingLinks.toArray(arrayLinks);
