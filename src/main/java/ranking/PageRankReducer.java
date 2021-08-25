@@ -1,3 +1,5 @@
+package ranking;
+
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 
@@ -5,8 +7,15 @@ import java.io.IOException;
 
 public class PageRankReducer extends Reducer<Text, Text, Text, Text> {
 
-    private final static float alpha = 0.85f;
+    private static float alpha;
 
+    @Override
+    public void setup(Context context) throws IOException, InterruptedException {
+        super.setup(context);
+        alpha = Float.parseFloat(context.getConfiguration().get("page.alpha"));
+    }
+
+    @Override
     public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
         String outgoingLinks = "";
         double pageRank = 0.0;
@@ -14,12 +23,14 @@ public class PageRankReducer extends Reducer<Text, Text, Text, Text> {
 
         for (Text text : values){
             str = text.toString();
-
+            /*
             if (){
 
             } else {
                 pageRank += Double.parseDouble((str));
             }
+
+             */
         }
 
         pageRank = (1 - alpha) + alpha * pageRank;

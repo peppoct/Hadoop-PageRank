@@ -21,9 +21,9 @@ public class ParserReducer extends Reducer<Text, Text, Text, Text> {
         String outgoinglinks = "";
 
         for (Text link : values)
-            outgoinglinks += link.toString();
+            outgoinglinks += link.toString() + ",";
 
-        String list = 1 + " " + outgoinglinks;
+        String list = 1 + "\t" + outgoinglinks;
         outValue.set(list);
         context.write(key, outValue);
     }

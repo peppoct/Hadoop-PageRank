@@ -33,15 +33,17 @@ public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
         String line = value.toString();
         outputKey.set(getTitle(line));
         String text  = getText(line);
-        Text[] link = getOutgoingLinks(text);
+        List<String> links = getOutgoingLinks(text);
 
         // get the counters to count the number of pages (line)
         context.getCounter(Counter.TOTAL_PAGES).increment(1);
 
-        if (link.length != 0){
+        if (links.size() != 0){
 
-            for (int i=0; i<link.length; i++)
-                context.write(outputKey, link[i]);
+            for (String link : links) {
+                outputVal.set(link);
+                context.write(outputKey, outputVal);
+            }
 
         } else {
             context.write(outputKey, new Text(""));
@@ -86,18 +88,16 @@ public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
      * @param str
      * @return return an array of outgoing links
      */
-    private Text[] getOutgoingLinks(String str){
+    private List<String> getOutgoingLinks(String str){
 
-        List<Text> outgoingLinks = new ArrayList<>();
+        List<String> outgoingLinks = new ArrayList<>();
         Matcher links = link_pat.matcher(str);
 
         while(links.find()){
-            outgoingLinks.add(new Text(links.group(1)));
+            outgoingLinks.add(links.group(1));
         }
 
-        Text[] arrayLinks = new Text[outgoingLinks.size()];
-        outgoingLinks.toArray(arrayLinks);
-        return arrayLinks;
+        return outgoingLinks;
     }
 }
 
