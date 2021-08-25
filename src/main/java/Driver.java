@@ -10,12 +10,15 @@ import parser.ParserMapper;
 import parser.ParserReducer;
 import ranking.PageRankMapper;
 import ranking.PageRankReducer;
+import sorting.SortMapper;
+import sorting.SortReducer;
 import utility.Counter;
 
 public class Driver {
     private static String INPUT_PATH;
     private static String OUTPUT1_PATH = "OUTPUT-1";
     private static String OUTPUT2_PATH = "OUTPUT-2";
+    private static String FINAL_OUTPUT = "PageRank";
     private static int NUM_REDUCERS;
     private static float ALPHA;
     private static float NUM_ITERATIONS;
@@ -66,7 +69,15 @@ public class Driver {
 
         System.out.println("[INFO] -> Computing completed!");
 
-        //Eliminare file di output intemedi
+        deleteFile(conf, FINAL_OUTPUT);
+
+        if (!sortJob(conf, NUM_REDUCERS)){
+            System.err.println("[ERROR] -> Something wrong in sort phase!");
+            System.exit(-1);
+        }
+
+        deleteFile(conf, OUTPUT2_PATH);
+        //Eliminare file di output intermedi
     }
 
     private static long parserJob(Configuration conf, int numReducers) throws Exception{
@@ -107,6 +118,25 @@ public class Driver {
 
         FileInputFormat.addInputPath(job, new Path(OUTPUT1_PATH));
         FileOutputFormat.setOutputPath(job, new Path(OUTPUT2_PATH));
+
+        return job.waitForCompletion(true);
+    }
+
+    private static boolean sortJob(Configuration conf, int numReducers) throws Exception{
+        Job job = Job.getInstance(conf, "sort");
+        job.setJarByClass(Driver.class);
+
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(Text.class);
+
+        job.setMapperClass(SortMapper.class);
+        job.setReducerClass(SortReducer.class);
+
+        // set number of reducer tasks to be used
+        job.setNumReduceTasks(numReducers);
+
+        FileInputFormat.addInputPath(job, new Path(OUTPUT2_PATH));
+        FileOutputFormat.setOutputPath(job, new Path(FINAL_OUTPUT));
 
         return job.waitForCompletion(true);
     }
