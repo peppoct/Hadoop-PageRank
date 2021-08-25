@@ -29,7 +29,7 @@ public class PageRankMapper extends Mapper<LongWritable, Text, Text, Text> {
             rank = 1/(double)numpages;
 
         outputKey.set(title);
-        outputVal.set(rank + "\t" + split[2]);
+        outputVal.set(1 + "\t" + split[2]);
         context.write(outputKey, outputVal);
 
         String[] outgoingLinks = split[2].split(",");

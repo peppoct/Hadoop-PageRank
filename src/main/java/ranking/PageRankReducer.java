@@ -6,35 +6,33 @@ import org.apache.hadoop.mapreduce.Reducer;
 import java.io.IOException;
 
 public class PageRankReducer extends Reducer<Text, Text, Text, Text> {
-
+    private static final Text outputKey = new Text();
+    private static final Text outputVal = new Text();
     private static float alpha;
 
     @Override
     public void setup(Context context) throws IOException, InterruptedException {
         super.setup(context);
-        alpha = Float.parseFloat(context.getConfiguration().get("page.alpha"));
+        alpha = context.getConfiguration().getFloat("page.alpha", 0.0f);
     }
 
     @Override
     public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-        String outgoingLinks = "";
+        String outgoinglinks = "";
         double pageRank = 0.0;
-        String str;
 
-        for (Text text : values){
-            str = text.toString();
-            /*
-            if (){
+        outputKey.set(key);
 
-            } else {
-                pageRank += Double.parseDouble((str));
+        for (Text value : values){
+            String[] list = value.toString().split("\t");
+            if(list[0].equals("1")) {
+                outgoinglinks = list[1];
+                continue;
             }
-
-             */
+             pageRank += Double.parseDouble(value.toString());
         }
 
-        pageRank = (1 - alpha) + alpha * pageRank;
-        context.write(new Text(), new Text(Double.toString(pageRank) + outgoingLinks));
-
+        outputVal.set(((1 - alpha) + alpha * pageRank) + "\t" + outgoinglinks);
+        context.write(outputKey, outputVal);
     }
 }
