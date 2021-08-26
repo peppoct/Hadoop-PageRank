@@ -23,7 +23,7 @@ public class ParserReducer extends Reducer<Text, Text, Text, Text> {
         for (Text link : values)
             outgoinglinks += link.toString() + ",";
 
-        String list = 1 + "\t" + outgoinglinks;
+        String list = "1.0\t" + outgoinglinks;
         outValue.set(list);
         context.write(key, outValue);
     }

@@ -13,8 +13,8 @@ import java.util.regex.Pattern;
 
 public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
 
-    private static final Pattern title_pat = Pattern.compile("<title>(.*)</title>");
-    private static final Pattern text_pat = Pattern.compile("<text(.*?)</text>");
+    private static final Pattern title_pat = Pattern.compile("<title.*?>(.*?)<\\/title>");
+    private static final Pattern text_pat = Pattern.compile("<text.*?>(.*?)<\\/text>");
     private static final Pattern link_pat = Pattern.compile("\\[\\[(.*?)\\]\\]");
 
     private static final Text outputKey = new Text();
@@ -30,7 +30,7 @@ public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
      */
     @Override
     public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException{
-        String line = value.toString();
+        String line = value.toString().replace("\t", " ");
         outputKey.set(getTitle(line));
         String text  = getText(line);
         List<String> links = getOutgoingLinks(text);
@@ -46,7 +46,8 @@ public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
             }
 
         } else {
-            context.write(outputKey, new Text(""));
+            outputVal.set("");
+            context.write(outputKey, outputVal);
         }
     }
 

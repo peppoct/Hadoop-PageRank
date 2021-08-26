@@ -1,6 +1,7 @@
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -10,6 +11,7 @@ import parser.ParserMapper;
 import parser.ParserReducer;
 import ranking.PageRankMapper;
 import ranking.PageRankReducer;
+import sorting.Comparator;
 import sorting.SortMapper;
 import sorting.SortReducer;
 import utility.Counter;
@@ -50,9 +52,10 @@ public class Driver {
             System.exit(-1);
         }
         //set the pageCount on the configuration
-        conf.set("page.num", Long.toString(numpages));
+        conf.setLong("page.num", numpages);
 
         System.out.println("[INFO] -> Parsing completed!");
+
 
         conf.setFloat("page.alpha", ALPHA);
 
@@ -77,7 +80,10 @@ public class Driver {
         }
 
         deleteFile(conf, OUTPUT2_PATH);
+        deleteFile(conf, OUTPUT1_PATH);
+        System.out.println("[INFO] -> Sort completed!");
         //Eliminare file di output intermedi
+
     }
 
     private static long parserJob(Configuration conf, int numReducers) throws Exception{
@@ -126,16 +132,20 @@ public class Driver {
         Job job = Job.getInstance(conf, "sort");
         job.setJarByClass(Driver.class);
 
+        job.setMapOutputKeyClass(DoubleWritable.class);
+        job.setMapOutputValueClass(Text.class);
+
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
 
         job.setMapperClass(SortMapper.class);
         job.setReducerClass(SortReducer.class);
+        job.setSortComparatorClass(Comparator.class);
 
         // set number of reducer tasks to be used
         job.setNumReduceTasks(numReducers);
 
-        FileInputFormat.addInputPath(job, new Path(OUTPUT2_PATH));
+        FileInputFormat.addInputPath(job, new Path(OUTPUT1_PATH));
         FileOutputFormat.setOutputPath(job, new Path(FINAL_OUTPUT));
 
         return job.waitForCompletion(true);
