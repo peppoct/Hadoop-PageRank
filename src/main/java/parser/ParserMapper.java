@@ -65,7 +65,7 @@ public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
      */
 
     private String getTitle(String str){
-        /*
+
         Matcher title_match = title_pat.matcher(str);
 
         //if title exists
@@ -74,13 +74,13 @@ public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
         else
             return null;
 
-         */
 
+/*
         String initialString = "<title>";
         // document.indexOf() returns the index of the first character
         return str.substring(
                 str.indexOf(initialString) + initialString.length(), // I need to sum the length of the string
-                str.indexOf("</title>"));
+                str.indexOf("</title>"));*/
     }
 
     /**
@@ -89,7 +89,7 @@ public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
      * @return return the text of the current page
      */
     private String getText(String str){
-        /*
+
         Matcher text_match = text_pat.matcher(str);
 
         //if title exists
@@ -98,8 +98,8 @@ public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
         else
             return null;
 
-         */
 
+/*
         String startOfTextSection = "<text";
         int start = str.indexOf(startOfTextSection);
         // from the end of '<text' go to '>', discarding possible attribute
@@ -107,7 +107,7 @@ public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
 
         return str.substring(
                 start + 1, // start from the character following '>'
-                str.indexOf("</text>"));
+                str.indexOf("</text>"));*/
     }
 
     /**
@@ -118,7 +118,7 @@ public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
     private ArrayList<String> getOutgoingLinks(String str){
 
         ArrayList<String> outgoingLinks = new ArrayList<>();
-        /*
+
         Matcher links = link_pat.matcher(str);
 
         while(links.find()){
@@ -127,8 +127,8 @@ public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
 
         return outgoingLinks;
 
-         */
 
+/*
         int i=0;
         while (true)
         {
@@ -142,7 +142,7 @@ public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
             i = end + 1; // Advance i for the next iteration
         }
 
-        return outgoingLinks;
+        return outgoingLinks;*/
     }
 }
 

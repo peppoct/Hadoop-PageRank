@@ -1,12 +1,15 @@
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
+import parser.ParseCombiner;
 import parser.ParserMapper;
 import parser.ParserReducer;
 import ranking.PageRankCombiner;
@@ -95,6 +98,7 @@ public class Driver {
 
         job.setMapperClass(ParserMapper.class);
         job.setReducerClass(ParserReducer.class);
+      //  job.setCombinerClass(ParseCombiner.class);
 
         // set number of reducer tasks to be used
         job.setNumReduceTasks(numReducers);
@@ -162,15 +166,14 @@ public class Driver {
         Job job = Job.getInstance(conf, "sort");
         job.setJarByClass(Driver.class);
 
-        job.setMapOutputKeyClass(DoubleWritable.class);
-        job.setMapOutputValueClass(Text.class);
+        job.setMapOutputKeyClass(Comparator.class);
+        job.setMapOutputValueClass(NullWritable.class);
 
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
 
         job.setMapperClass(SortMapper.class);
         job.setReducerClass(SortReducer.class);
-        job.setSortComparatorClass(Comparator.class);
 
         // set number of reducer tasks to be used
         job.setNumReduceTasks(1);

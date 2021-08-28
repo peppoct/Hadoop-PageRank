@@ -12,18 +12,18 @@ public class ParserReducer extends Reducer<Text, Text, Text, Text> {
      * Reducer used to store the results calculated with the mappers
      * @param key title of the page
      * @param values outgoing links of this page
-     * @param context job cotext
+     * @param context job context
      * @throws IOException
      * @throws InterruptedException
      */
     @Override
     public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException{
-        String outgoinglinks = "";
+        String outgoingLinks = "";
 
         for (Text link : values)
-            outgoinglinks += link.toString() + "//";
+            outgoingLinks += link.toString() + "//";
 
-        String list = "1.0\t" + outgoinglinks;
+        String list = "1.0\t" + outgoingLinks;
         outValue.set(list);
         context.write(key, outValue);
     }
