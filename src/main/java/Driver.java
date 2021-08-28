@@ -18,14 +18,16 @@ import utility.Counter;
 
 public class Driver {
     private static String INPUT_PATH;
-    private static String OUTPUT1_PATH = "OUTPUT-1";
-    private static String OUTPUT2_PATH = "OUTPUT-2";
+    private static String OUTPUT_Parsing = "OUTPUT-1";
+    private static String OUTPUT_Ranking = "OUTPUT-2";
     private static String FINAL_OUTPUT = "PageRank";
     private static int NUM_REDUCERS;
     private static float ALPHA;
-    private static float NUM_ITERATIONS;
+    private static int NUM_ITERATIONS;
 
     public static void main(String[] args) throws Exception {
+
+
         // set configurations
         Configuration conf = new Configuration();
 
@@ -34,6 +36,10 @@ public class Driver {
             System.err.println("Error");
             System.exit(-1);
         }
+
+        deleteFile(conf, OUTPUT_Parsing);
+        deleteFile(conf, OUTPUT_Ranking);
+        deleteFile(conf, FINAL_OUTPUT);
 
         System.out.println("args[0]: <input>\t"+otherArgs[0]);
         System.out.println("args[1]: <input>\t"+otherArgs[1]);
@@ -53,34 +59,24 @@ public class Driver {
         }
         //set the pageCount on the configuration
         conf.setLong("page.num", numpages);
+        conf.setFloat("page.alpha", ALPHA);
 
         System.out.println("[INFO] -> Parsing completed!");
 
-
-        conf.setFloat("page.alpha", ALPHA);
-
         for (int i = 0; i < NUM_ITERATIONS; i++){
-            if(!computePageRankJob(conf, NUM_REDUCERS)){
+            if(!computePageRankJob(conf, i, NUM_REDUCERS)){
                 System.err.println("[ERROR] -> Something wrong in compute phase!");
                 System.exit(-1);
             }
-            deleteFile(conf, OUTPUT1_PATH);
-            String tmp = OUTPUT1_PATH;
-            OUTPUT1_PATH = OUTPUT2_PATH;
-            OUTPUT2_PATH = tmp;
         }
 
         System.out.println("[INFO] -> Computing completed!");
-
-        deleteFile(conf, FINAL_OUTPUT);
 
         if (!sortJob(conf, NUM_REDUCERS)){
             System.err.println("[ERROR] -> Something wrong in sort phase!");
             System.exit(-1);
         }
 
-        deleteFile(conf, OUTPUT2_PATH);
-        deleteFile(conf, OUTPUT1_PATH);
         System.out.println("[INFO] -> Sort completed!");
         //Eliminare file di output intermedi
 
@@ -100,7 +96,7 @@ public class Driver {
         job.setNumReduceTasks(numReducers);
 
         FileInputFormat.addInputPath(job, new Path(INPUT_PATH));
-        FileOutputFormat.setOutputPath(job, new Path(OUTPUT1_PATH));
+        FileOutputFormat.setOutputPath(job, new Path(OUTPUT_Parsing));
 
         boolean check = job.waitForCompletion(true);
         if (check)
@@ -109,7 +105,7 @@ public class Driver {
             return -1;
     }
 
-    private static boolean computePageRankJob(Configuration conf, int numReducers) throws Exception{
+    private static boolean computePageRankJob(Configuration conf, int iteration, int numReducers) throws Exception{
         Job job = Job.getInstance(conf, "compute");
         job.setJarByClass(Driver.class);
 
@@ -122,10 +118,35 @@ public class Driver {
         // set number of reducer tasks to be used
         job.setNumReduceTasks(numReducers);
 
-        FileInputFormat.addInputPath(job, new Path(OUTPUT1_PATH));
-        FileOutputFormat.setOutputPath(job, new Path(OUTPUT2_PATH));
+        // CHECK IF STEP 1
+        if (iteration == 0) {
+            FileInputFormat.setInputPaths(job,
+                    new Path(OUTPUT_Parsing + "/part-r-00000")/*,
+                    new Path(OUTPUT_Parsing + "/part-r-00002")*/);
+            FileOutputFormat.setOutputPath(job, new Path(OUTPUT_Ranking + "/iter" + (iteration+1)));
+        } else {
+            FileInputFormat.setInputPaths(job,
+                    new Path(OUTPUT_Ranking + "/iter" + (iteration) + "/part-r-00000")/*,
+                    new Path(OUTPUT_Ranking + "/iter" + (iteration) + "/part-r-00001"),
+                    new Path(OUTPUT_Ranking + "/iter" + (iteration) + "/part-r-00002")*/);
+            FileOutputFormat.setOutputPath(job, new Path(OUTPUT_Ranking + "/iter" + (iteration+1)));
+        }
 
-        return job.waitForCompletion(true);
+        /*
+        FileInputFormat.setInputPaths(job, inputs(OUTPUT_Parsing));
+        FileOutputFormat.setOutputPath(job, new Path(OUTPUT_Ranking));
+         */
+
+        boolean result = job.waitForCompletion(true);
+        /*
+        if (iteration == 0)
+            deleteFile(conf, OUTPUT_Parsing);
+        if (iteration > 0)
+            deleteFile(conf, OUTPUT_Ranking + "/iter" + iteration);
+
+         */
+
+        return result;
     }
 
     private static boolean sortJob(Configuration conf, int numReducers) throws Exception{
@@ -145,7 +166,9 @@ public class Driver {
         // set number of reducer tasks to be used
         job.setNumReduceTasks(numReducers);
 
-        FileInputFormat.addInputPath(job, new Path(OUTPUT1_PATH));
+        FileInputFormat.setInputPaths(job,  new Path(OUTPUT_Ranking + "/iter" + NUM_ITERATIONS + "/part-r-00000")/*,
+                new Path(OUTPUT_Ranking + "/iter" + (NUM_ITERATIONS) + "/part-r-00001"),
+                new Path(OUTPUT_Ranking + "/iter" + (NUM_ITERATIONS) + "/part-r-00002")*/);
         FileOutputFormat.setOutputPath(job, new Path(FINAL_OUTPUT));
 
         return job.waitForCompletion(true);
@@ -166,6 +189,5 @@ public class Driver {
         }catch(Exception e){
             e.printStackTrace();
         }
-
     }
 }

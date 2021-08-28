@@ -21,7 +21,7 @@ public class PageRankMapper extends Mapper<LongWritable, Text, Text, Text> {
     // title    1   outgoinglinks
     @Override
     public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-        String[] split = value.toString().split("\t");
+        String[] split = value.toString().trim().split("\t");
 
         String title = split[0];
         outputKey.set(title);
@@ -35,12 +35,13 @@ public class PageRankMapper extends Mapper<LongWritable, Text, Text, Text> {
             outputVal.set(Double.toString(rank));
             context.write(outputKey, outputVal);
             return;
-        } else { //emit the structure
-            outputVal.set("1.0\t" + split[2]);
-            context.write(outputKey, outputVal);
         }
 
-        String[] outgoingLinks = split[2].split(",");
+        //emit the structure
+        outputVal.set(1.0 + "\t" + split[2]);
+        context.write(outputKey, outputVal);
+
+        String[] outgoingLinks = split[2].split("//");
 
         for (String outgoingLink : outgoingLinks){
             double outgoingLinkRank = rank/outgoingLinks.length;

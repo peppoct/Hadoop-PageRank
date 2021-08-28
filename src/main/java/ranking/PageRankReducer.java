@@ -6,7 +6,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 import java.io.IOException;
 
 public class PageRankReducer extends Reducer<Text, Text, Text, Text> {
-    private static final Text outputKey = new Text();
     private static final Text outputVal = new Text();
     private static long numpages;
     private static float alpha;
@@ -16,6 +15,8 @@ public class PageRankReducer extends Reducer<Text, Text, Text, Text> {
         super.setup(context);
         alpha = context.getConfiguration().getFloat("page.alpha", 0.85f);
         numpages = context.getConfiguration().getLong("page.num", 0);
+        if (numpages == 0)
+            System.exit(-1);
     }
 
     //title     rank
@@ -25,18 +26,20 @@ public class PageRankReducer extends Reducer<Text, Text, Text, Text> {
         String outgoinglinks = "";
         double pageRank = 0.0;
 
-        outputKey.set(key);
-
         for (Text value : values){
             String[] list = value.toString().split("\t");
-            if(Double.parseDouble(list[0]) == 1.0) {
+            if(list.length > 1) {
                 outgoinglinks = list[1];
+                //pageRank += Double.parseDouble(list[0]);
                 continue;
             }
              pageRank += Double.parseDouble(value.toString());
         }
 
-        outputVal.set(((1 - alpha) * pageRank + (alpha/numpages)) + "\t" + outgoinglinks);
-        context.write(outputKey, outputVal);
+        if (!outgoinglinks.equals("")) {
+            double val = ((1 - alpha) * pageRank + (alpha / numpages));
+            outputVal.set(val + "\t" + outgoinglinks);
+            context.write(key, outputVal);
+        }
     }
 }
