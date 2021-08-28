@@ -11,7 +11,7 @@ public class PageRankMapper extends Mapper<LongWritable, Text, Text, Text> {
     private static final Text outputVal = new Text();
 
     @Override
-    protected void setup(Context context) throws IOException, InterruptedException {
+    public void setup(Context context) throws IOException, InterruptedException {
         super.setup(context);
         numpages = context.getConfiguration().getLong("page.num", 0);
         if (numpages < 1)

@@ -17,7 +17,7 @@ public class ParserReducer extends Reducer<Text, Text, Text, Text> {
      * @throws InterruptedException
      */
     @Override
-    protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException{
+    public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException{
         String outgoinglinks = "";
 
         for (Text link : values)

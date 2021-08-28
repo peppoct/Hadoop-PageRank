@@ -9,6 +9,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 import parser.ParserMapper;
 import parser.ParserReducer;
+import ranking.PageRankCombiner;
 import ranking.PageRankMapper;
 import ranking.PageRankReducer;
 import sorting.Comparator;
@@ -32,8 +33,9 @@ public class Driver {
         Configuration conf = new Configuration();
 
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-        if (otherArgs.length != 3){
+        if (otherArgs.length != 4){
             System.err.println("Error");
+            System.out.println("<data> <alpha> <number iteraion> <number reducers>");
             System.exit(-1);
         }
 
@@ -41,14 +43,16 @@ public class Driver {
         deleteFile(conf, OUTPUT_Ranking);
         deleteFile(conf, FINAL_OUTPUT);
 
-        System.out.println("args[0]: <input>\t"+otherArgs[0]);
-        System.out.println("args[1]: <input>\t"+otherArgs[1]);
-        System.out.println("args[1]: <input>\t"+otherArgs[2]);
+        System.out.println("[Configurations]");
+        System.out.println("args[0]: data <input>\t"+otherArgs[0]);
+        System.out.println("args[1]: alpha <input>\t"+otherArgs[1]);
+        System.out.println("args[2]: number iteration <input>\t"+otherArgs[2]);
+        System.out.println("args[3]: number reducers <input>\t"+otherArgs[3]);
 
         INPUT_PATH = otherArgs[0];
         ALPHA = Float.parseFloat(otherArgs[1]);
         NUM_ITERATIONS = Integer.parseInt(otherArgs[2]);
-        NUM_REDUCERS = 1;
+        NUM_REDUCERS = Integer.parseInt(otherArgs[2]);
 
         //First phase
         //deleteFile(conf, 1);
@@ -72,7 +76,7 @@ public class Driver {
 
         System.out.println("[INFO] -> Computing completed!");
 
-        if (!sortJob(conf, NUM_REDUCERS)){
+        if (!sortJob(conf)){
             System.err.println("[ERROR] -> Something wrong in sort phase!");
             System.exit(-1);
         }
@@ -114,28 +118,33 @@ public class Driver {
 
         job.setMapperClass(PageRankMapper.class);
         job.setReducerClass(PageRankReducer.class);
+        job.setCombinerClass(PageRankCombiner.class);
 
         // set number of reducer tasks to be used
         job.setNumReduceTasks(numReducers);
 
         // CHECK IF STEP 1
         if (iteration == 0) {
+            /*
             FileInputFormat.setInputPaths(job,
-                    new Path(OUTPUT_Parsing + "/part-r-00000")/*,
-                    new Path(OUTPUT_Parsing + "/part-r-00002")*/);
+                    new Path(OUTPUT_Parsing + "/part-r-00000"),
+                    new Path(OUTPUT_Parsing + "/part-r-00002"));
+            */
+            FileInputFormat.setInputPaths(job, generatePaths(OUTPUT_Parsing));
             FileOutputFormat.setOutputPath(job, new Path(OUTPUT_Ranking + "/iter" + (iteration+1)));
         } else {
+            /*
             FileInputFormat.setInputPaths(job,
-                    new Path(OUTPUT_Ranking + "/iter" + (iteration) + "/part-r-00000")/*,
+                    new Path(OUTPUT_Ranking + "/iter" + (iteration) + "/part-r-00000"),
                     new Path(OUTPUT_Ranking + "/iter" + (iteration) + "/part-r-00001"),
-                    new Path(OUTPUT_Ranking + "/iter" + (iteration) + "/part-r-00002")*/);
+                    new Path(OUTPUT_Ranking + "/iter" + (iteration) + "/part-r-00002"));
+
+             */
+
+            FileInputFormat.setInputPaths(job, generatePaths(OUTPUT_Ranking + "/iter" + iteration));
             FileOutputFormat.setOutputPath(job, new Path(OUTPUT_Ranking + "/iter" + (iteration+1)));
         }
 
-        /*
-        FileInputFormat.setInputPaths(job, inputs(OUTPUT_Parsing));
-        FileOutputFormat.setOutputPath(job, new Path(OUTPUT_Ranking));
-         */
 
         boolean result = job.waitForCompletion(true);
         /*
@@ -149,7 +158,7 @@ public class Driver {
         return result;
     }
 
-    private static boolean sortJob(Configuration conf, int numReducers) throws Exception{
+    private static boolean sortJob(Configuration conf) throws Exception{
         Job job = Job.getInstance(conf, "sort");
         job.setJarByClass(Driver.class);
 
@@ -164,19 +173,29 @@ public class Driver {
         job.setSortComparatorClass(Comparator.class);
 
         // set number of reducer tasks to be used
-        job.setNumReduceTasks(numReducers);
+        job.setNumReduceTasks(1);
 
-        FileInputFormat.setInputPaths(job,  new Path(OUTPUT_Ranking + "/iter" + NUM_ITERATIONS + "/part-r-00000")/*,
+        /**
+        FileInputFormat.setInputPaths(job,  new Path(OUTPUT_Ranking + "/iter" + NUM_ITERATIONS + "/part-r-00000"),
                 new Path(OUTPUT_Ranking + "/iter" + (NUM_ITERATIONS) + "/part-r-00001"),
-                new Path(OUTPUT_Ranking + "/iter" + (NUM_ITERATIONS) + "/part-r-00002")*/);
+                new Path(OUTPUT_Ranking + "/iter" + (NUM_ITERATIONS) + "/part-r-00002"));
+         */
+
+        FileInputFormat.setInputPaths(job, generatePaths(OUTPUT_Ranking + "/iter" + NUM_ITERATIONS));
+
         FileOutputFormat.setOutputPath(job, new Path(FINAL_OUTPUT));
 
         return job.waitForCompletion(true);
     }
 
-
-
     //*********************************UTILITY**************************************/
+    static Path[] generatePaths(String root){
+        Path[] paths = new Path[NUM_REDUCERS];
+        for(int p = 0; p<NUM_REDUCERS; p++)
+            paths[p] = new Path(root + "/part-r-0000" + p);
+        return paths;
+    }
+
     //  removes old outputs that has to be overwritten by hadoop jobs
     private static void deleteFile(Configuration conf, String path){
 
