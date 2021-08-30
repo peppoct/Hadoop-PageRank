@@ -43,17 +43,18 @@ public class ParserMapper extends Mapper<LongWritable, Text, Text, Text>{
 
         outputKey.set(title);
 
-        if (links.size() != 0){
+        String outgoingLinks = "";
 
-            for (String link : links) {
-                outputVal.set(link);
-                context.write(outputKey, outputVal);
-            }
+        for (String link : links) {
+            //outputVal.set(link);
+            outgoingLinks += link + "//";
 
-        } else {
-            outputVal.set("");
-            context.write(outputKey, outputVal);
         }
+        String list = "1.0\t" + outgoingLinks;
+        outputVal.set(list);
+        context.write(outputKey, outputVal);
+
+
     }
 
     //************************************UTILITY******************************************/

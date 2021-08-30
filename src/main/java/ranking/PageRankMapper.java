@@ -49,5 +49,7 @@ public class PageRankMapper extends Mapper<LongWritable, Text, Text, Text> {
             outputVal.set(Double.toString(outgoingLinkRank));
             context.write(outputKey, outputVal);
         }
+
+
     }
 }

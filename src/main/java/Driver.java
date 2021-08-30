@@ -1,15 +1,12 @@
-import org.apache.commons.lang.ObjectUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
-import parser.ParseCombiner;
 import parser.ParserMapper;
 import parser.ParserReducer;
 import ranking.PageRankCombiner;
@@ -38,7 +35,7 @@ public class Driver {
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
         if (otherArgs.length != 4){
             System.err.println("Error");
-            System.out.println("<data> <alpha> <number iteraion> <number reducers>");
+            System.out.println("<data> <alpha> <number iteration> <number reducers>");
             System.exit(-1);
         }
 
@@ -97,8 +94,7 @@ public class Driver {
         job.setOutputValueClass(Text.class);
 
         job.setMapperClass(ParserMapper.class);
-        job.setReducerClass(ParserReducer.class);
-      //  job.setCombinerClass(ParseCombiner.class);
+        //job.setReducerClass(ParserReducer.class);
 
         // set number of reducer tasks to be used
         job.setNumReduceTasks(numReducers);
