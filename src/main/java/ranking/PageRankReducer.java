@@ -2,7 +2,6 @@ package ranking;
 
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
-
 import java.io.IOException;
 
 public class PageRankReducer extends Reducer<Text, Text, Text, Text> {
@@ -21,6 +20,15 @@ public class PageRankReducer extends Reducer<Text, Text, Text, Text> {
 
     //title     rank
     //title     1   outlinks
+
+    /**
+     *
+     * @param key           title
+     * @param values        all the outlinks of title with their rank [rank '\t' link1//link2//...//linkN]
+     * @param context       job context
+     * @throws IOException
+     * @throws InterruptedException
+     */
     @Override
     public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
         String outgoinglinks = "";
@@ -30,7 +38,6 @@ public class PageRankReducer extends Reducer<Text, Text, Text, Text> {
             String[] list = value.toString().split("\t");
             if(list.length > 1) {
                 outgoinglinks = list[1];
-                //pageRank += Double.parseDouble(list[0]);
                 continue;
             }
              pageRank += Double.parseDouble(value.toString());

@@ -1,17 +1,11 @@
 package sorting;
 
-
-import org.apache.hadoop.io.DoubleWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.io.WritableComparator;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 public class Comparator implements WritableComparable<Comparator> {
-
     private String title;
     private double rank;
 
@@ -35,7 +29,7 @@ public class Comparator implements WritableComparable<Comparator> {
 
     @Override
     public void write(DataOutput out) throws IOException {
-        out.writeUTF(this.title.toString());
+        out.writeUTF(this.title);
         out.writeDouble(this.rank);
     }
 
@@ -63,7 +57,7 @@ public class Comparator implements WritableComparable<Comparator> {
 
     @Override
     public String toString() {
-        return title + String.valueOf(rank) ;
+        return title + rank ;
     }
 
     @Override

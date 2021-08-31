@@ -18,16 +18,23 @@ public class PageRankMapper extends Mapper<LongWritable, Text, Text, Text> {
             System.exit(-1);
     }
 
-    // title    1   outgoinglinks
+    /**
+     * Mapper used to
+     * @param key       row id
+     * @param value     text line
+     * @param context   job context
+     * @throws IOException
+     * @throws InterruptedException
+     */
     @Override
     public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-        String[] split = value.toString().trim().split("\t");
+        String[] split = value.toString().split("\t");
 
         String title = split[0];
         outputKey.set(title);
 
         double rank = Double.parseDouble(split[1]);
-        if(rank == 1.0)
+        if(rank == 1.0) //the first time
             rank = (double) 1/numpages;
 
         //page without outgoing links
@@ -49,7 +56,5 @@ public class PageRankMapper extends Mapper<LongWritable, Text, Text, Text> {
             outputVal.set(Double.toString(outgoingLinkRank));
             context.write(outputKey, outputVal);
         }
-
-
     }
 }
